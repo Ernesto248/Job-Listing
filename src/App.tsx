@@ -6,6 +6,7 @@ import FilterModal from "./components/FilterModal";
 function App() {
   const [isModalVisble, setIsModalVisible] = useState<boolean>(false);
   const [filterItems, setFilterItems] = useState<Array<string>>([]);
+  const [filterJobs, setFilterJobs] = useState<Array<Job>>([])
   const [jobs, setJobs] = useState<Array<Job>>([
     {
       id: 1,
@@ -42,14 +43,46 @@ function App() {
   }, []);
 
   const handlePressedButton = (value: string) => {
-    setFilterItems([...filterItems, value]);
-    setIsModalVisible(true);
+    if (!filterItems.includes(value)) {
+      setFilterItems([...filterItems, value]);
+      setIsModalVisible(true);
+    }
   };
 
   const handleClear = () => {
     setFilterItems([]);
     setIsModalVisible(false);
   };
+
+  const deleteItem = (itemToDelete: string) => {
+    const newItems = filterItems.filter((item) => item !== itemToDelete);
+    setFilterItems(newItems);
+  };
+
+  useEffect(() => {
+    if (filterItems.length === 0) {
+      setIsModalVisible(false);
+    }
+  }, [filterItems]);
+
+  const filteringJobs = ()=>{
+    const filteredJobs = jobs.filter((job)=>{
+      return filterItems.every((filter)=>{
+        return (
+          job.level === filter ||
+          job.role ===filter ||
+          job.languages.includes(filter)||
+          job.tools.includes(filter)
+        )
+      })
+    })
+    setFilterJobs(filteredJobs)
+  }
+  
+
+  useEffect(() => {
+    filteringJobs();
+  }, [filterItems, jobs]);
 
   return (
     <>
@@ -58,10 +91,14 @@ function App() {
           <img src="/images/bg-header-desktop.svg" alt="" />
         </div>
         {isModalVisble && (
-          <FilterModal onClear={handleClear} items={filterItems} />
+          <FilterModal
+            onDeleteItem={deleteItem}
+            onClear={handleClear}
+            items={filterItems}
+          />
         )}
         <div className="flex flex-col items-center justify-center w-3/4">
-          {jobs.map((job) => (
+          {(filterItems.length > 0 ? filterJobs : jobs).map((job) => (
             <JobCard
               key={job.id}
               jobProp={job}
